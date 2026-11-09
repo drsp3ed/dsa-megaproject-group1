@@ -1,0 +1,13 @@
+//
+// Created by salah0v on 09.11.2026.
+//
+
+#ifndef DSA_MINIPROJECT_BROWSERHISTORY_H
+#define DSA_MINIPROJECT_BROWSERHISTORY_H
+
+
+class BrowserHistory {
+};
+
+
+#endif //DSA_MINIPROJECT_BROWSERHISTORY_H
