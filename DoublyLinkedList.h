@@ -11,6 +11,7 @@
 class DoublyLinkedList {
 private:
     std::string url;
+    std::string title;
     DoublyLinkedList* next;
     DoublyLinkedList* prev;
 
@@ -19,15 +20,19 @@ public:
     DoublyLinkedList();
 
     // constructor method for inputs (not default)
-    DoublyLinkedList(const std::string &url, DoublyLinkedList* next, DoublyLinkedList* prev);
+    DoublyLinkedList(const std::string &url, const std::string &title, DoublyLinkedList* next, DoublyLinkedList* prev);
 
     std::string getUrl() const;
     std::string getNextUrl() const;
     std::string getPrevUrl() const;
+    std::string getTitle() const;
+    std::string getNextTitle() const;
+    std::string getPrevTitle() const;
     DoublyLinkedList* getNext() const;
     DoublyLinkedList* getPrev() const;
 
     void setUrl(const std::string &url);
+    void setTitle(const std::string &title);
     void setNext(DoublyLinkedList* next);
     void setPrev(DoublyLinkedList* prev);
 

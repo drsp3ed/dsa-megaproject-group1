@@ -7,8 +7,8 @@
 #include "DoublyLinkedList.h"
 #include <iostream>
 
-BrowserHistory::BrowserHistory(std::string homepage) {
-    head = new DoublyLinkedList(homepage, nullptr, nullptr);
+BrowserHistory::BrowserHistory(std::string homepage, std::string title) {
+    head = new DoublyLinkedList(homepage, title, nullptr, nullptr);
     current = head;
     tail = head;
     size = 1;
@@ -53,6 +53,14 @@ std::string BrowserHistory::current_page() {
     return current->getUrl();
 }
 
+// Return the title of the current page
+std::string BrowserHistory::current_title() {
+    if (current == nullptr) {
+        return "";
+    }
+    return current->getTitle();
+}
+
 // Display all pages and mark the current page
 void BrowserHistory::display_history() {
     DoublyLinkedList* temp = head;
@@ -62,16 +70,19 @@ void BrowserHistory::display_history() {
         } else {
             std::cout << "  ";
         }
+        if (!temp->getTitle().empty()) {
+            std::cout << temp->getTitle() << " - ";
+        }
         std::cout << temp->getUrl() << std::endl;
         temp = temp->getNext();
     }
 }
 
 // Visit a new page
-void BrowserHistory::visit(std::string url) {
+void BrowserHistory::visit(std::string url, std::string title) {
     // Handle an empty history
     if (current == nullptr) {
-        head = new DoublyLinkedList(url, nullptr, nullptr);
+        head = new DoublyLinkedList(url, title, nullptr, nullptr);
         current = head;
         tail = head;
         size = 1;
@@ -91,7 +102,7 @@ void BrowserHistory::visit(std::string url) {
     }
 
     // Create and append the new page
-    DoublyLinkedList* newNode = new DoublyLinkedList(url, nullptr, current);
+    DoublyLinkedList* newNode = new DoublyLinkedList(url, title, nullptr, current);
     current->setNext(newNode);
     current = newNode;
     tail = newNode;
@@ -147,6 +158,7 @@ void BrowserHistory::delete_url(const std::string& url) {
             // Save deleted page information in the stack
             deletedPages.push({
                 temp->getUrl(),
+                temp->getTitle(),
                 originalPosition,
                 wasCurrent
             });
@@ -187,7 +199,7 @@ void BrowserHistory::restore() {
     DeletedPage lastDeleted = deletedPages.top();
     // Create a new node for the restored page
     DoublyLinkedList* newNode =
-        new DoublyLinkedList(lastDeleted.url, nullptr, nullptr);
+        new DoublyLinkedList(lastDeleted.url, lastDeleted.title, nullptr, nullptr);
     // Case 1: History is empty or original position is 0
     if (head == nullptr || lastDeleted.originalPosition <= 0) {
         newNode->setNext(head);

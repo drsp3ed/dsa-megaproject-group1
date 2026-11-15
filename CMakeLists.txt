@@ -7,4 +7,7 @@ add_executable(dsa_miniproject main.cpp
         DoublyLinkedList.cpp
         DoublyLinkedList.h
         BrowserHistory.cpp
-        BrowserHistory.h)
+        BrowserHistory.h
+        nlohmann/json.hpp)
+
+target_include_directories(dsa_miniproject PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

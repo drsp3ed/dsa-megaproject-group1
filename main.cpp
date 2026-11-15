@@ -5,7 +5,7 @@
 int main() {
     // just a test to see if ts works
     auto head = new DoublyLinkedList();
-    std::cout << head->getUrl() << std::endl;
+    std::cout << head->getUrl() << " " << head->getTitle() << std::endl;
 
     return 0;
 }

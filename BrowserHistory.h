@@ -14,6 +14,7 @@ class BrowserHistory {
 private:
     struct DeletedPage {
         std::string url;
+        std::string title;
         int originalPosition;
         bool wasCurrent;
     };
@@ -28,12 +29,13 @@ private:
     std::stack<DeletedPage> deletedPages;
 
 public:
-    BrowserHistory(std::string homepage);
+    BrowserHistory(std::string homepage, std::string title = "");
 
-    void visit(std::string url);
+    void visit(std::string url, std::string title = "");
     std::string back(int steps);
     std::string forward(int steps);
     std::string current_page();
+    std::string current_title();
     void display_history();
 
     void delete_history();
