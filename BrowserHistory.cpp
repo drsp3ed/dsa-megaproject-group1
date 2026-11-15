@@ -5,7 +5,13 @@
 
 #include "BrowserHistory.h"
 #include "DoublyLinkedList.h"
+#include "nlohmann/json.hpp"
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <vector>
+
+using json = nlohmann::json;
 
 BrowserHistory::BrowserHistory(std::string homepage, std::string title) {
     head = new DoublyLinkedList(homepage, title, nullptr, nullptr);
@@ -66,9 +72,9 @@ void BrowserHistory::display_history() {
     DoublyLinkedList* temp = head;
     while (temp != nullptr) {
         if (temp == current) {
-            std::cout << "[<]";
+            std::cout << "  [<] ";
         } else {
-            std::cout << "  ";
+            std::cout << "      ";
         }
         if (!temp->getTitle().empty()) {
             std::cout << temp->getTitle() << " - ";
@@ -146,42 +152,34 @@ void BrowserHistory::delete_url(const std::string& url) {
     DoublyLinkedList* temp = head;
     while (temp != nullptr) {
         if (temp->getUrl() == url) {
-            // Calculate the original position
             int originalPosition = 0;
             DoublyLinkedList* counter = head;
             while (counter != temp) {
                 counter = counter->getNext();
                 originalPosition++;
             }
-            // Save whether this page is currently active
             bool wasCurrent = (temp == current);
-            // Save deleted page information in the stack
             deletedPages.push({
                 temp->getUrl(),
                 temp->getTitle(),
                 originalPosition,
                 wasCurrent
             });
-            // Save neighboring nodes
             DoublyLinkedList* previous = temp->getPrev();
             DoublyLinkedList* next = temp->getNext();
-            // Connect the previous node to the next node
             if (previous != nullptr) {
                 previous->setNext(next);
             } else {
                 head = next;
             }
-            // Connect the next node to the previous node
             if (next != nullptr) {
                 next->setPrev(previous);
             } else {
                 tail = previous;
             }
-            // Update current page if necessary
             if (wasCurrent) {
                 current = (previous != nullptr) ? previous : next;
             }
-            // Delete the node
             delete temp;
             size--;
             return;
@@ -197,10 +195,8 @@ void BrowserHistory::restore() {
         return;
     }
     DeletedPage lastDeleted = deletedPages.top();
-    // Create a new node for the restored page
     DoublyLinkedList* newNode =
         new DoublyLinkedList(lastDeleted.url, lastDeleted.title, nullptr, nullptr);
-    // Case 1: History is empty or original position is 0
     if (head == nullptr || lastDeleted.originalPosition <= 0) {
         newNode->setNext(head);
         if (head != nullptr) {
@@ -211,7 +207,6 @@ void BrowserHistory::restore() {
             tail = newNode;
         }
     }
-    // Case 2: Insert at the original position
     else {
         DoublyLinkedList* temp = head;
         for (int i = 0;
@@ -231,24 +226,167 @@ void BrowserHistory::restore() {
             tail = newNode;
         }
     }
-    // Update current page if necessary
     if (lastDeleted.wasCurrent) {
         current = newNode;
     }
     size++;
-    // Remove the oldest page if capacity is exceeded
     if (size > capacity) {
         DoublyLinkedList* oldHead = head;
         head = head->getNext();
         head->setPrev(nullptr);
-        // Prevent current from pointing to deleted memory
         if (current == oldHead) {
             current = head;
         }
         delete oldHead;
         size--;
     }
-    // Remove the restored page from the stack
     deletedPages.pop();
     std::cout << "Restored: " << lastDeleted.url << std::endl;
+}
+
+// Export the full history to a JSON file so it can be imported later
+// all of our knowledge of these JSON libraries was from public sources... so it's probably not used in the best way
+// but we tried our best!
+bool BrowserHistory::export_history(const std::string& filename) const {
+    json root;
+    root["version"] = 1;
+    root["capacity"] = capacity;
+
+    json entries = json::array();
+    int currentIndex = -1;
+    int count = 0;
+
+    for (DoublyLinkedList* temp = head; temp != nullptr; temp = temp->getNext()) {
+        json entry;
+        entry["url"] = temp->getUrl();
+        entry["title"] = temp->getTitle();
+        entries.push_back(entry);
+
+        if (temp == current) {
+            currentIndex = count;
+        }
+        count++;
+    }
+
+    root["size"] = count;
+    root["current_index"] = currentIndex;
+    root["entries"] = entries;
+
+    std::ofstream out(filename);
+    if (!out.is_open()) {
+        std::cout << "Could not open file for writing: " << filename << std::endl;
+        return false;
+    }
+
+    try {
+        out << root.dump(4) << std::endl;
+    } catch (const json::exception& e) {
+        std::cout << "Failed to serialize history: " << e.what() << std::endl;
+        return false;
+    }
+
+    out.close();
+    if (!out) {
+        std::cout << "Failed to write file: " << filename << std::endl;
+        return false;
+    }
+
+    std::cout << "Exported " << count << " page(s) to " << filename << std::endl;
+    return true;
+}
+
+// Import a history written by export_history(), replacing whatever is loaded now
+// again, probably not the best usage of this library, but we did our best
+bool BrowserHistory::import_history(const std::string& filename) {
+    std::ifstream in(filename);
+    if (!in.is_open()) {
+        std::cout << "Could not open file for reading: " << filename << std::endl;
+        return false;
+    }
+
+    json root;
+    try {
+        in >> root;
+    } catch (const json::parse_error& e) {
+        std::cout << "Not a valid JSON file: " << e.what() << std::endl;
+        return false;
+    } catch (const json::exception& e) {
+        std::cout << "Could not read history: " << e.what() << std::endl;
+        return false;
+    }
+    if (!root.is_object()) {
+        std::cout << "Unexpected format: the top level must be a JSON object." << std::endl;
+        return false;
+    }
+    if (root.contains("version") && root["version"].is_number_integer() &&
+        root["version"].get<int>() != 1) {
+        std::cout << "Unsupported file version: " << root["version"] << std::endl;
+        return false;
+    }
+    if (!root.contains("entries") || !root["entries"].is_array()) {
+        std::cout << "Unexpected format: missing an \"entries\" array." << std::endl;
+        return false;
+    }
+
+    std::vector<std::pair<std::string, std::string>> pages;
+    int skipped = 0;
+    for (const auto& entry : root["entries"]) {
+        if (!entry.is_object() || !entry.contains("url") || !entry["url"].is_string()) {
+            skipped++;
+            continue;
+        }
+        std::string url = entry["url"].get<std::string>();
+        std::string title;
+        if (entry.contains("title") && entry["title"].is_string()) {
+            title = entry["title"].get<std::string>();
+        }
+        pages.push_back({url, title});
+    }
+    if (skipped > 0) {
+        std::cout << "Skipped " << skipped << " entry/entries without a valid \"url\"." << std::endl;
+    }
+
+    int newCapacity = capacity;
+    if (root.contains("capacity") && root["capacity"].is_number_integer()) {
+        int fileCapacity = root["capacity"].get<int>();
+        if (fileCapacity > 0) {
+            newCapacity = fileCapacity;
+        }
+    }
+
+    int newCurrentIndex = -1;
+    if (root.contains("current_index") && root["current_index"].is_number_integer()) {
+        newCurrentIndex = root["current_index"].get<int>();
+    }
+
+    if (static_cast<int>(pages.size()) > newCapacity) {
+        int excess = static_cast<int>(pages.size()) - newCapacity;
+        pages.erase(pages.begin(), pages.begin() + excess);
+        newCurrentIndex -= excess;   // may go out of range; handled below
+    }
+
+    delete_history();
+    capacity = newCapacity;
+
+    for (const auto& page : pages) {
+        DoublyLinkedList* node = new DoublyLinkedList(page.first, page.second, nullptr, tail);
+        if (tail == nullptr) {
+            head = node;
+        } else {
+            tail->setNext(node);
+        }
+        tail = node;
+        size++;
+    }
+    if (newCurrentIndex >= 0 && newCurrentIndex < size) {
+        current = head;
+        for (int i = 0; i < newCurrentIndex; i++) {
+            current = current->getNext();
+        }
+    } else {
+        current = tail;
+    }
+
+    std::cout << "Imported " << size << " page(s) from " << filename << std::endl;
+    return true;
 }

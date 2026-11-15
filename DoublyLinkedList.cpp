@@ -35,5 +35,6 @@ DoublyLinkedList* DoublyLinkedList::getNext() const { return next; }
 DoublyLinkedList* DoublyLinkedList::getPrev() const { return prev; }
 
 void DoublyLinkedList::setUrl(const std::string &url) { this->url = url; }
+void DoublyLinkedList::setTitle(const std::string &title) { this->title = title; }
 void DoublyLinkedList::setNext(DoublyLinkedList *next) { this->next = next; }
 void DoublyLinkedList::setPrev(DoublyLinkedList *prev) { this->prev = prev; }

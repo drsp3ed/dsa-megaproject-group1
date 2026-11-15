@@ -1,0 +1,6 @@
+# CLion build output
+/cmake-build-*/
+
+# exported and test history files
+test*.json
+history.json
