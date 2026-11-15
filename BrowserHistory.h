@@ -42,6 +42,9 @@ public:
     void delete_url(const std::string& url);
     void restore();
 
+    bool export_history(const std::string& filename) const;
+    bool import_history(const std::string& filename);
+
     ~BrowserHistory();
 };
 
