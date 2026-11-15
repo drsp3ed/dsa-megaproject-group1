@@ -273,7 +273,7 @@ bool BrowserHistory::export_history(const std::string& filename) const {
     root["entries"] = entries;
 
     std::ofstream out(filename);
-    if (!out.is_open()) {
+    if (!out.is_open()) { // is_open() because just if (!out) produced a bug where export reports success and does nothing
         std::cout << "Could not open file for writing: " << filename << std::endl;
         return false;
     }
@@ -299,7 +299,7 @@ bool BrowserHistory::export_history(const std::string& filename) const {
 // again, probably not the best usage of this library, but we did our best
 bool BrowserHistory::import_history(const std::string& filename) {
     std::ifstream in(filename);
-    if (!in.is_open()) {
+    if (!in.is_open()) { // is_open is same reason as before
         std::cout << "Could not open file for reading: " << filename << std::endl;
         return false;
     }

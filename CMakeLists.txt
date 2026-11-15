@@ -11,3 +11,12 @@ add_executable(dsa_miniproject main.cpp
         nlohmann/json.hpp)
 
 target_include_directories(dsa_miniproject PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_executable(tests tests/test_browser_history.cpp
+        DoublyLinkedList.cpp
+        DoublyLinkedList.h
+        BrowserHistory.cpp
+        BrowserHistory.h
+        nlohmann/json.hpp)
+
+target_include_directories(tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

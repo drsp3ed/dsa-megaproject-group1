@@ -1,5 +1,6 @@
 //
-// Created by Rasul Gurbanli on 15.11.2026.
+// Created by salah0v on 09.11.2026
+// Written by Rasul Gurbanli on 15.11.2026.
 // CLI Driver and User Interface for BrowserHistory
 //
 

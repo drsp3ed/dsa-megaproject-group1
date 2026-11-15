@@ -4,6 +4,7 @@
 #include "DoublyLinkedList.h"
 #include <stdexcept>
 
+//ONE THING that's worth noting - it's actually a class for a Node, and it's just called linkedlist for convenience
 DoublyLinkedList::DoublyLinkedList() : url("https://www.youtube.com/watch?v=E4WlUXrJgy4"), title("not a rickroll :D"), next(nullptr), prev(nullptr) {}
 DoublyLinkedList::DoublyLinkedList(const std::string &url, const std::string &title, DoublyLinkedList *next, DoublyLinkedList *prev) : url(url), title(title), next(next), prev(prev) {}
 
